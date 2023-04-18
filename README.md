@@ -1,2 +1,2 @@
 # http-c
-Simple http server in C
+A simple http server in C
