@@ -1,53 +1,114 @@
 #include <arpa/inet.h>
+#include <errno.h>  // to get error messages
 #include <netdb.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#define PORT "3490"  // the port users will be connecting to
+
+#define BACKLOG 10
+
+void sigchld_handler(int s) {
+    int saved_errno = errno;
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
+
+    errno = saved_errno;
+}
+
+void *get_in_addr(struct sockaddr *sa) {
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in *)sa)->sin_addr);
+    }
+    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
+}
 
 int main(int argc, char *argv[]) {
-  struct addrinfo hints, *res, *p;
-  int status;
+    int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
+    struct addrinfo hints, *servinfo, *p;
+    struct sockaddr_storage their_addr;  // connector's address information
+    socklen_t sin_size;
+    struct sigaction sa;
+    int option = 1;
+    int rv;
 
-  // defined in netinet/in.h
-  char ipstr[INET6_ADDRSTRLEN];
+    // defined in netinet/in.h
+    char s[INET6_ADDRSTRLEN];
 
-  if (argc != 2) {
-    fprintf(stderr, "Error: showip hostname\n");
-    exit(1);
-  }
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
 
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-
-  if ((status = getaddrinfo(argv[1], NULL, &hints, &res)) != 0) {
-    fprintf(stderr, "[ERROR]: %s\n", gai_strerror(status));
-    return 2;
-  }
-
-  fprintf(stdout, "[LOG]  : IP addresses for %s:\n\n", argv[1]);
-
-  for (p = res; p != NULL; p = p->ai_next) {
-    void *addr;
-    char *ipver;
-    if (p->ai_family == AF_INET) { // IPv4
-      struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-      addr = &(ipv4->sin_addr);
-      ipver = "IPv4";
-    } else { // IPv6
-      struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-      addr = &(ipv6->sin6_addr);
-      ipver = "IPv6";
+    if ((rv = getaddrinfo("localhost", PORT, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return 1;
     }
-    // convert the IP to a string and print it:
-    inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-    printf(" %s: %s\n", ipver, ipstr);
-  }
 
-  freeaddrinfo(res); // free the linked list
+    for (p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1) {
+            perror("server: socket");
+            continue;
+        }
 
-  return 0;
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option,
+                       sizeof(int)) == -1) {
+            perror("setsockopt");
+            exit(1);
+        }
+
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sockfd);
+            perror("server: bind");
+            continue;
+        }
+
+        break;
+    }
+
+    freeaddrinfo(servinfo);  // no need for res more
+
+    if (p == NULL) {
+        fprintf(stderr, "server: failed to bind\n");
+        exit(1);
+    }
+
+    if (listen(sockfd, BACKLOG) == -1) {
+        perror("listen");
+        exit(1);
+    }
+
+    printf("server: waiting for connections...\n");
+
+    while (1) {  // main accept() loop
+        sin_size = sizeof their_addr;
+        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+        if (new_fd == -1) {
+            perror("accept");
+            continue;
+        }
+
+        inet_ntop(their_addr.ss_family,
+                  get_in_addr((struct sockaddr *)&their_addr),
+                  s, sizeof s);
+        printf("server: got connection from %s\n", s);
+
+        if (!fork()) {      // this is the child process
+            close(sockfd);  // child doesn't need the listener
+            if (send(new_fd, "OK!", 4, 0) == -1)
+                perror("send");
+            close(new_fd);
+            exit(0);
+        }
+        close(new_fd);  // parent doesn't need this
+    }
+
+    return 0;
 }
