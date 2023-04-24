@@ -14,6 +14,7 @@
 #define PORT "3490"  // the port users will be connecting to
 
 #define BACKLOG 10
+#define BUF_SIZE 65535
 
 void sigchld_handler(int s) {
     int saved_errno = errno;
@@ -102,8 +103,22 @@ int main(int argc, char *argv[]) {
 
         if (!fork()) {      // this is the child process
             close(sockfd);  // child doesn't need the listener
-            if (send(new_fd, "OK!", 4, 0) == -1)
+            char *buf = malloc(BUF_SIZE);
+            int rcvd = recv(new_fd, buf, BUF_SIZE, 0);
+            if (recv(new_fd, "OK!", 4, 0) == -1)
                 perror("send");
+            buf[rcvd] = '\0';
+            char *method,  // "GET" or "POST"
+                *uri,      // "/index.html" things before '?'
+                *protocol;     // "HTTP/1.1"
+
+            method = strtok(buf, " \t\r\n");
+            uri = strtok(NULL, " \t");
+            protocol = strtok(NULL, " \t\r\n");
+            fprintf(stdout, "METHOD: %s\n", method);
+            fprintf(stdout, "URL: %s\n", uri);
+            fprintf(stdout, "PROT: %s\n", protocol);
+
             close(new_fd);
             exit(0);
         }
