@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo("localhost", PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo("127.0.0.1", PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -105,12 +105,12 @@ int main(int argc, char *argv[]) {
             close(sockfd);  // child doesn't need the listener
             char *buf = malloc(BUF_SIZE);
             int rcvd = recv(new_fd, buf, BUF_SIZE, 0);
-            if (recv(new_fd, "OK!", 4, 0) == -1)
+            if (rcvd == -1)
                 perror("send");
             buf[rcvd] = '\0';
-            char *method,  // "GET" or "POST"
-                *uri,      // "/index.html" things before '?'
-                *protocol;     // "HTTP/1.1"
+            char *method,   // "GET" or "POST"
+                *uri,       // "/index.html" things before '?'
+                *protocol;  // "HTTP/1.1"
 
             method = strtok(buf, " \t\r\n");
             uri = strtok(NULL, " \t");
@@ -118,7 +118,9 @@ int main(int argc, char *argv[]) {
             fprintf(stdout, "METHOD: %s\n", method);
             fprintf(stdout, "URL: %s\n", uri);
             fprintf(stdout, "PROT: %s\n", protocol);
+            char res[] = "HTTP/1.1 200 OK \t\r\n";
 
+            send(new_fd, res, strlen(res), 0);
             close(new_fd);
             exit(0);
         }
