@@ -60,3 +60,4 @@ dkms.conf
 # Error log
 error.txt
 .DS_Store
+main
