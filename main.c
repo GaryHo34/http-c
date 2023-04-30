@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
         sin_size = sizeof their_addr;
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
         if (new_fd == -1) {
-            ERROR_MSG("[server] %s: %s\n", "failed to accept");
+            ERROR_MSG("[server] %s", "failed to accept");
             continue;
         }
 
