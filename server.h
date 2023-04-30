@@ -13,11 +13,6 @@
 #define DEFAULT_PORT "3490"
 #define DEFAULT_HOST "localhost"
 
-#define ERROR_MSG(fmt, ...)                \
-    char _buf[256];                        \
-    strerror_r(errno, _buf, sizeof(_buf)); \
-    fprintf(stderr, fmt, ##__VA_ARGS__, _buf)
-
 /**
  * @brief initialize server
  * @param host host name
