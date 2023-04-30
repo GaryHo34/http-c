@@ -16,4 +16,4 @@ server.o: server.c server.h log.h
 	$(CC) $(CFLAGS) -c server.c
 
 clean:
-	rm -f *.o main
+	rm -f *.o httpc
