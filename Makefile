@@ -6,14 +6,14 @@ CFLAGS = -Wall -g
 
 all: main
 
-main: main.o httpc.o
-	$(CC) $(CFLAGS) -o main main.o httpc.o
+main: main.o server.o
+	$(CC) $(CFLAGS) -o main main.o server.o
 
-main.o: main.c httpc.h
+main.o: main.c server.h log.h
 	$(CC) $(CFLAGS) -c main.c
 
-httpc.o: httpc.c httpc.h
-	$(CC) $(CFLAGS) -c httpc.c
+server.o: server.c server.h log.h
+	$(CC) $(CFLAGS) -c server.c
 
 clean:
 	rm -f *.o main
