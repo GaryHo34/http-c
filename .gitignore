@@ -58,6 +58,5 @@ dkms.conf
 .vscode/
 
 # Error log
-error.txt
 .DS_Store
-main
+httpc
