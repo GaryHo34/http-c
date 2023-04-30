@@ -4,40 +4,16 @@ CC = gcc
 # define compile-time flags all errors, warnings, and debugging symbols
 CFLAGS = -Wall -g
 
-# define any directories containing header files other than /usr/include
-INCLUDES = -I/usr/local/include
+all: main
 
-# define library paths in addition to /usr/lib
-LFLAGS = -L/usr/local/lib
+main: main.o httpc.o
+	$(CC) $(CFLAGS) -o main main.o httpc.o
 
-# define any libraries to link into executable:
-LIBS = -lm
+main.o: main.c
+	$(CC) $(CFLAGS) -c main.c
 
-# define the C source files
-SRCS = main.c
-
-# define the C object files
-OBJS = $(SRCS:.c=.o)
-
-# define the executable file
-MAIN = main
-
-# define the header files
-HDRS =
-
-# define the dependencies
-DEPS = $(HDRS) Makefile
-
-# define the rules
-
-all: $(MAIN)
-$(MAIN): $(OBJS)
-$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
-
-.c.o:
-$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+httpc.o: httpc.c
+	$(CC) $(CFLAGS) -c httpc.c
 
 clean:
-$(RM) $(OBJS) *~ $(MAIN)
-
-# end of makefile
+	rm -f *.o main
