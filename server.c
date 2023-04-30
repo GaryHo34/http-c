@@ -1,13 +1,17 @@
-#include "httpc.h"
+#include "server.h"
 
 int init_serv(char *host, char *port) {
-    // getaddrinfo()
+    // port numbers range from 0 to 65536
+    int portnum;
+    sscanf(port, "%d", &portnum);
+    if (portnum < 0 || portnum > 65536) {
+        ERROR_MSG("[server] %s\n", "invalid port number");
+        exit(EXIT_FAILURE);
+    }
+
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
-    int rv;
-
-    // setsockopt()
-    int option = 1;  // option_vale of SO_REUSEADDR
+    int rv, option = 1;  // option_vale of SO_REUSEADDR
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -48,5 +52,11 @@ int init_serv(char *host, char *port) {
 
     freeaddrinfo(servinfo);  // no need for res more
 
+    if (listen(sockfd, BACKLOG) == -1) {
+        ERROR_MSG("[server] %s: %s\n", "failed to listen");
+        exit(EXIT_FAILURE);
+    }
+
+    
     return sockfd;
 }
