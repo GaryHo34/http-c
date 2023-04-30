@@ -6,9 +6,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#ifndef HTTPC_H
-#define HTTPC_H
+#ifndef SERVER_H
+#define SERVER_H
 
+#define BACKLOG 100
 #define DEFAULT_PORT "3490"
 #define DEFAULT_HOST "localhost"
 
@@ -18,9 +19,11 @@
     fprintf(stderr, fmt, ##__VA_ARGS__, _buf)
 
 /**
- * param: host, port
- * return socket file descriptor
+ * @brief initialize server
+ * @param host host name
+ * @param port port number(0 - 65535)
+ * @return socket file descriptor
  */
 int init_serv(char *host, char *port);
 
-#endif  // HTTPC_H
+#endif  // SERVER_H

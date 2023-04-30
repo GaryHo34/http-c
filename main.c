@@ -1,19 +1,11 @@
 #include <arpa/inet.h>
-#include <errno.h>  // to get error messages
-#include <netdb.h>
 #include <netinet/in.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
-#include "httpc.h"
+#include "server.h"
 
-#define BACKLOG 10
 #define BUF_SIZE 65535
 
 void *get_in_addr(struct sockaddr *sa) {
@@ -29,7 +21,7 @@ int main(int argc, char *argv[]) {
     char *port = DEFAULT_PORT;
 
     if (argc == 2) {
-        port = argv[1];
+        host = argv[1];
     } else if (argc == 3) {
         host = argv[1];
         port = argv[2];
@@ -41,11 +33,6 @@ int main(int argc, char *argv[]) {
     struct sockaddr_storage their_addr;  // connector's address information
     char s[INET6_ADDRSTRLEN];
     socklen_t sin_size;
-
-    if (listen(sockfd, BACKLOG) == -1) {
-        ERROR_MSG("[server] %s: %s\n", "failed to listen");
-        exit(EXIT_FAILURE);
-    }
 
     printf("server: waiting for connections...\n");
 
