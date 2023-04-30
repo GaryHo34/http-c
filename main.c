@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 
 #include "server.h"
+#include "log.h"
 
 #define BUF_SIZE 65535
 
