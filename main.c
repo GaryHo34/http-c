@@ -11,18 +11,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define PORT "3490"  // the port users will be connecting to
+#include "httpc.h"
 
 #define BACKLOG 10
 #define BUF_SIZE 65535
-
-void sigchld_handler(int s) {
-    int saved_errno = errno;
-    while (waitpid(-1, NULL, WNOHANG) > 0)
-        ;
-
-    errno = saved_errno;
-}
 
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
@@ -32,58 +24,27 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 int main(int argc, char *argv[]) {
-    int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
-    struct addrinfo hints, *servinfo, *p;
+    // get host and port from command line
+    char *host = DEFAULT_HOST;
+    char *port = DEFAULT_PORT;
+
+    if (argc == 2) {
+        port = argv[1];
+    } else if (argc == 3) {
+        host = argv[1];
+        port = argv[2];
+    }
+
+    int sockfd = init_serv(host, port);
+
+    int new_fd;                          // listen on sock_fd, new connection on new_fd
     struct sockaddr_storage their_addr;  // connector's address information
-    socklen_t sin_size;
-    struct sigaction sa;
-    int option = 1;
-    int rv;
-
-    // defined in netinet/in.h
     char s[INET6_ADDRSTRLEN];
-
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-
-    if ((rv = getaddrinfo("127.0.0.1", PORT, &hints, &servinfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
-    }
-
-    for (p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype,
-                             p->ai_protocol)) == -1) {
-            perror("server: socket");
-            continue;
-        }
-
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option,
-                       sizeof(int)) == -1) {
-            perror("setsockopt");
-            exit(1);
-        }
-
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(sockfd);
-            perror("server: bind");
-            continue;
-        }
-
-        break;
-    }
-
-    freeaddrinfo(servinfo);  // no need for res more
-
-    if (p == NULL) {
-        fprintf(stderr, "server: failed to bind\n");
-        exit(1);
-    }
+    socklen_t sin_size;
 
     if (listen(sockfd, BACKLOG) == -1) {
-        perror("listen");
-        exit(1);
+        ERROR_MSG("[server] %s: %s\n", "failed to listen");
+        exit(EXIT_FAILURE);
     }
 
     printf("server: waiting for connections...\n");
@@ -92,7 +53,7 @@ int main(int argc, char *argv[]) {
         sin_size = sizeof their_addr;
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
         if (new_fd == -1) {
-            perror("accept");
+            ERROR_MSG("[server] %s: %s\n", "failed to accept");
             continue;
         }
 
