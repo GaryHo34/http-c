@@ -3,6 +3,8 @@
 
 #include <sys/socket.h>
 
+#include "request.h"
+
 #define BACKLOG 100
 #define BUF_SIZE 65535
 #define DEFAULT_PORT "3490"
@@ -28,7 +30,8 @@ static inline void get_sockaddr(char *addrstr, struct sockaddr *sa);
 /**
  * @brief run server
  * @param sockfd socket file descriptor
+ * @param controller controller function
  */
-void server_run(int sockfdÏ);
+void server_run(int sockfd, void (*controller)(request_t *));
 
 #endif  // SERVER_H
