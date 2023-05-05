@@ -16,6 +16,8 @@ void custom_controller(request_t *req, response_t *res) {
                req->header->method, req->header->route);
         generate_response(res, 200, "OK", "Hello World!");
     }
+
+    generate_response(res, 404, "Not Found", "");
 }
 
 int main(int argc, char *argv[]) {
