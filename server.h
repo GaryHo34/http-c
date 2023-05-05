@@ -2,7 +2,7 @@
 #define SERVER_H
 
 #include <sys/socket.h>
-
+#include <string.h>
 #include "request.h"
 
 #define BACKLOG 100
