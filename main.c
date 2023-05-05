@@ -8,7 +8,7 @@ void custom_controller(request_t *req, response_t *res) {
     GET(req, "/") {
         printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
-        generate_response(res, 200, "OK", "");
+        generate_response(res, 200, "OK", "<h1> Hello World! </h1>");
     }
 
     POST(req, "/hello") {

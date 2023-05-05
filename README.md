@@ -28,15 +28,17 @@ Before running the server, you can custom your owe controller in `main.c`:
 
 ```c
 // main.c
-void custom_controller(request_t *req) {
+void custom_controller(request_t *req, response_t *res) {
     GET(req, "/") {
-        printf("This is a GET? %s request from %s\n",
+        printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
+        generate_response(res, 200, "OK", "<h1> Hello World! </h1>");
     }
 
     POST(req, "/hello") {
-        printf("This is a POST? %s request from %s\n",
+        printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
+        generate_response(res, 200, "OK", "Hello World!");
     }
 }
 ```
@@ -73,6 +75,9 @@ This is a GET request from /
 [server] got connection from ::1
 This is a POST request from /hello
 ```
+
+Open web browser and visit `http://localhost:3490/` can see the response.
+
 
 ## License
 
