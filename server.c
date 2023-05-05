@@ -86,7 +86,7 @@ void init_server(int *sockfd, char *hostname, char *port) {
     return;
 }
 
-void server_run(int sockfd) {
+void server_run(int sockfd, void (*controller)(request_t *)) {
     int clientfd, rcvd;
     struct sockaddr_storage inaddr;  // connector's address information
     char addrstr[BUF_SIZE];
@@ -120,13 +120,7 @@ void server_run(int sockfd) {
 
             request_t *req = parse_request(buf);
 
-            GET(req, "/") {
-                printf("This is a GET? %s request from %s\n", req->header->method, req->header->route);
-            }
-
-            POST(req, "/") {
-                printf("This is a POST? %s request from %s\n", req->header->method, req->header->route);
-            }
+            controller(req);
 
             char res[] = "HTTP/1.1 200 OK \t\r\n";
 
