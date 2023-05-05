@@ -1,9 +1,7 @@
 #include "server.h"
 
 #include <arpa/inet.h>
-#include <errno.h>
 #include <netdb.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -86,13 +84,13 @@ void init_server(int *sockfd, char *hostname, char *port) {
     return;
 }
 
-void server_run(int sockfd, void (*controller)(request_t *)) {
+void server_run(int sockfd, void (*controller)(request_t *, response_t *)) {
     int clientfd, rcvd;
     struct sockaddr_storage inaddr;  // connector's address information
     char addrstr[BUF_SIZE];
     socklen_t sin_size;
 
-    LOG_MSG("[server] %s", "waiting for connection...");
+    LOG_MSG("[server] waiting for connection...");
 
     while (1) {  // main accept() loop
         sin_size = sizeof inaddr;
@@ -105,11 +103,13 @@ void server_run(int sockfd, void (*controller)(request_t *)) {
 
         get_sockaddr(addrstr, (struct sockaddr *)&inaddr);
 
-        LOG_MSG("[server] got connection from %s", addrstr);
+        LOG_MSG("\n[server] got connection from %s", addrstr);
 
         if (!fork()) {      // this is the child process
             close(sockfd);  // child doesn't need the listener
+
             char *buf = malloc(BUF_SIZE);
+            char *res_str = malloc(BUF_SIZE);
 
             if ((rcvd = recv(clientfd, buf, BUF_SIZE, 0)) == -1) {
                 free(buf);
@@ -119,14 +119,18 @@ void server_run(int sockfd, void (*controller)(request_t *)) {
             buf[rcvd] = '\0';
 
             request_t *req = parse_request(buf);
+            response_t *res = generate_response_t();
 
-            controller(req);
+            controller(req, res);
 
-            char res[] = "HTTP/1.1 200 OK \t\r\n";
+            response_to_string(res_str, res);
 
-            send(clientfd, res, strlen(res), 0);
+            send(clientfd, res_str, strlen(res_str), 0);
+
             close(clientfd);
-            free_request(req);
+            free_request_t(req);
+            free_response_t(res);
+            free(res_str);
             free(buf);
             exit(0);
         }
