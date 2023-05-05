@@ -68,10 +68,10 @@ output:
 [server] waiting for connection...
 
 [server] got connection from ::1
-This is a GET? GET request from /
+This is a GET request from /
 
 [server] got connection from ::1
-This is a POST? POST request from /hello
+This is a POST request from /hello
 ```
 
 ## License
