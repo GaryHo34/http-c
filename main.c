@@ -1,17 +1,20 @@
+#include <stdio.h>
+
 #include "log.h"
 #include "request.h"
 #include "server.h"
-#include <stdio.h>
 
-void custom_controller(request_t *req) {
+void custom_controller(request_t *req, response_t *res) {
     GET(req, "/") {
-        printf("This is a GET? %s request from %s\n",
+        printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
+        generate_response(res, 200, "OK", "");
     }
 
     POST(req, "/hello") {
-        printf("This is a POST? %s request from %s\n",
+        printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
+        generate_response(res, 200, "OK", "Hello World!");
     }
 }
 
