@@ -1,6 +1,15 @@
 #include "server.h"
 
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "log.h"
+#include "request.h"
 
 static inline void get_sockaddr(char *addrstr, struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {  // IPv4
@@ -78,7 +87,7 @@ void init_server(int *sockfd, char *hostname, char *port) {
 }
 
 void server_run(int sockfd) {
-    int clientfd;
+    int clientfd, rcvd;
     struct sockaddr_storage inaddr;  // connector's address information
     char addrstr[BUF_SIZE];
     socklen_t sin_size;
@@ -101,24 +110,30 @@ void server_run(int sockfd) {
         if (!fork()) {      // this is the child process
             close(sockfd);  // child doesn't need the listener
             char *buf = malloc(BUF_SIZE);
-            int rcvd = recv(clientfd, buf, BUF_SIZE, 0);
-            if (rcvd == -1)
-                perror("send");
-            buf[rcvd] = '\0';
-            char *method,   // "GET" or "POST"
-                *uri,       // "/index.html" things before '?'
-                *protocol;  // "HTTP/1.1"
 
-            // method = strtok(buf, " \t\r\n");
-            // uri = strtok(NULL, " \t");
-            // protocol = strtok(NULL, " \t\r\n");
-            fprintf(stdout, "REQ: %s\n", buf);
-            // fprintf(stdout, "URL: %s\n", uri);
-            // fprintf(stdout, "PROT: %s\n", protocol);
+            if ((rcvd = recv(clientfd, buf, BUF_SIZE, 0)) == -1) {
+                free(buf);
+                ERROR_MSG("[server] %s", "failed to recv");
+            }
+
+            buf[rcvd] = '\0';
+
+            request_t *req = parse_request(buf);
+
+            GET(req, "/") {
+                printf("This is a GET? %s request from %s\n", req->header->method, req->header->route);
+            }
+
+            POST(req, "/") {
+                printf("This is a POST? %s request from %s\n", req->header->method, req->header->route);
+            }
+
             char res[] = "HTTP/1.1 200 OK \t\r\n";
 
             send(clientfd, res, strlen(res), 0);
             close(clientfd);
+            free_request(req);
+            free(buf);
             exit(0);
         }
         close(clientfd);  // parent doesn't need this
