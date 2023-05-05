@@ -33,13 +33,17 @@ void custom_controller(request_t *req, response_t *res) {
         printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
         generate_response(res, 200, "OK", "<h1> Hello World! </h1>");
+        return;
     }
 
     POST(req, "/hello") {
         printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
         generate_response(res, 200, "OK", "Hello World!");
+        return;
     }
+
+    generate_response(res, 404, "Not Found", "");
 }
 ```
 
