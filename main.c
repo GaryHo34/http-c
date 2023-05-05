@@ -1,6 +1,7 @@
 #include "log.h"
 #include "request.h"
 #include "server.h"
+#include <stdio.h>
 
 void custom_controller(request_t *req) {
     GET(req, "/") {

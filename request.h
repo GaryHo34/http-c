@@ -48,6 +48,6 @@ char *generate_response(int code, char *body);
  * @brief free request
  * @param request
  */
-void free_request(struct request *request);
+void free_request(request_t *request);
 
 #endif  // REQUE_H
