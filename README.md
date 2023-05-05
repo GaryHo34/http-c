@@ -41,18 +41,18 @@ void custom_controller(request_t *req) {
 }
 ```
 
-Then run the server:
-
-```
-
 and inject to `server_run` function.
-
 
 ```c
 // main.c
 server_run(sockfd, custom_controller);
 ```
 
+Then run the server:
+
+```
+$ ./httpc localhost 3490
+```
 
 Do a simple test with curl:
 
