@@ -1,4 +1,3 @@
-#include <stdio.h>
 
 #include "log.h"
 #include "request.h"
