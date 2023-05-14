@@ -15,70 +15,70 @@
 #define PUT(req, url) ROUTE(req, url, "PUT")
 #define DELETE(req, url) ROUTE(req, url, "DELETE")
 
-typedef struct header {
+typedef struct {
     char *method,   // GET, POST, PUT, DELETE
         *protocol,  // HTTP/1.1
         *route,     // /index.html
         *host,      // localhost:8080
         *msg;       // OK, Not Found, Internal Server Error
     int code;       // 200, 404, 500
-} header_t;
+} header;
 
-typedef struct request {
-    struct header *header;
+typedef struct {
+    header *header;
     char *body;
-} request_t;
+} request;
 
-typedef struct response {
-    struct header *header;
+typedef struct {
+    header *header;
     char *body;
-} response_t;
+} response;
 
 /**
  * @brief generate request
- * @return request_t
+ * @return request
  */
-request_t *generate_request_t();
+request *generate_request();
 
 /**
  * @brief generate response
- * @return response_t
+ * @return response
  */
-response_t *generate_response_t();
+response *create_response();
 
 /**
  * @brief parse request
  * @param buf request string
  * @return request
  */
-request_t *parse_request(char *buf);
+request *parse_request(char *buf);
 
 /**
  * @brief get full response
- * @param res response_t
+ * @param res response
  * @param code status code
  * @param msg status message
  * @param body response body
  */
-void generate_response(response_t *res, int code, char *msg, char *body);
+void generate_response(response *res, int code, char *msg, char *body);
 
 /**
  * @brief convert response to string
  * @param res response string
- * @param response_t
+ * @param response
  */
-void response_to_string(char *res_str, response_t *res);
+void responseo_string(char *res_str, response *res);
 
 /**
- * @brief free request_t
+ * @brief free request
  * @param request
  */
-void free_request_t(request_t *request);
+void free_request(request *request);
 
 /**
- * @brief free response_t
- * @param response_t
+ * @brief free response
+ * @param response
  */
-void free_response_t(response_t *response);
+void free_response(response *response);
 
 #endif  // REQUE_H
