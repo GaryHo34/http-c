@@ -83,7 +83,7 @@ void init_server(int *sockfd, char *hostname, char *port) {
     return;
 }
 
-void server_run(int sockfd, void (*controller)(request_t *, response_t *)) {
+void server_run(int sockfd, void (*controller)(request *, response *)) {
     int clientfd, rcvd;
     struct sockaddr_storage inaddr;  // connector's address information
     char addrstr[BUF_SIZE];
@@ -117,18 +117,18 @@ void server_run(int sockfd, void (*controller)(request_t *, response_t *)) {
 
             buf[rcvd] = '\0';
 
-            request_t *req = parse_request(buf);
-            response_t *res = generate_response_t();
+            request *req = parse_request(buf);
+            response *res = create_response();
 
             controller(req, res);
 
-            response_to_string(res_str, res);
+            responseo_string(res_str, res);
 
             send(clientfd, res_str, strlen(res_str), 0);
 
             close(clientfd);
-            free_request_t(req);
-            free_response_t(res);
+            free_request(req);
+            free_response(res);
             free(res_str);
             free(buf);
             exit(0);

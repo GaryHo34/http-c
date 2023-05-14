@@ -31,6 +31,6 @@ static inline void get_sockaddr(char *addrstr, struct sockaddr *sa);
  * @param sockfd socket file descriptor
  * @param controller controller function
  */
-void server_run(int sockfd, void (*controller)(request_t *, response_t *));
+void server_run(int sockfd, void (*controller)(request *, response *));
 
 #endif  // SERVER_H

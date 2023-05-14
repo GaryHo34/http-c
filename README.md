@@ -28,7 +28,7 @@ Before running the server, you can custom your owe controller in `main.c`:
 
 ```c
 // main.c
-void custom_controller(request_t *req, response_t *res) {
+void custom_controller(request *req, response *res) {
     GET(req, "/") {
         printf("This is a %s request from %s\n",
                req->header->method, req->header->route);

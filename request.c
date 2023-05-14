@@ -4,22 +4,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-request_t* generate_request_t() {
-    request_t* req = malloc(sizeof(request_t));
+request* create_request() {
+    request* req = malloc(sizeof(request));
     req->body = NULL;
-    req->header = malloc(sizeof(header_t));
+    req->header = malloc(sizeof(header));
     return req;
 }
 
-response_t* generate_response_t() {
-    response_t* res = malloc(sizeof(response_t));
+response* create_response() {
+    response* res = malloc(sizeof(response));
     res->body = NULL;
-    res->header = malloc(sizeof(header_t));
+    res->header = malloc(sizeof(header));
     return res;
 }
 
-request_t* parse_request(char* buf) {
-    request_t* req = generate_request_t();
+request* parse_request(char* buf) {
+    request* req = generate_request();
 
     req->header->method = strtok_r(buf, DELEMITER, &buf);
     req->header->route = strtok_r(buf, DELEMITER, &buf);
@@ -30,13 +30,13 @@ request_t* parse_request(char* buf) {
     return req;
 }
 
-void generate_response(response_t* res, int code, char* msg, char* body) {
+void generate_response(response* res, int code, char* msg, char* body) {
     res->header->code = code;
     res->header->msg = msg;
     res->body = body;
 }
 
-void response_to_string(char* res_str, response_t* res) {
+void responseo_string(char* res_str, response* res) {
     sprintf(res_str, "%s %d %s\r\n\r\n%s",
             HTTP_PROTOCOL,
             res->header->code,
@@ -44,12 +44,12 @@ void response_to_string(char* res_str, response_t* res) {
             res->body);
 }
 
-void free_request_t(request_t* request) {
+void free_request(request* request) {
     free(request->header);
     free(request);
 }
 
-void free_response_t(response_t* response) {
+void free_response(response* response) {
     free(response->header);
     free(response);
 }

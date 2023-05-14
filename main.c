@@ -3,7 +3,7 @@
 #include "request.h"
 #include "server.h"
 
-void custom_controller(request_t *req, response_t *res) {
+void custom_controller(request *req, response *res) {
     GET(req, "/") {
         printf("This is a %s request from %s\n",
                req->header->method, req->header->route);
