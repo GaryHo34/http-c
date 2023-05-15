@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <sys/socket.h>
+
 #include "request.h"
 
 #define BACKLOG 100
@@ -30,7 +31,8 @@ static inline void get_sockaddr(char *addrstr, struct sockaddr *sa);
  * @brief run server
  * @param sockfd socket file descriptor
  * @param controller controller function
+ * @param thread_num number of threads
  */
-void server_run(int sockfd, void (*controller)(request *, response *));
+void server_run(int sockfd, void (*controller)(request *, response *), int thread_num);
 
 #endif  // SERVER_H

@@ -16,11 +16,10 @@ task *create_task(void (*func)(void *), void *arg) {
     return newTask;
 }
 
-int taskqueue_init(taskqueue *queue) {
+void taskqueue_init(taskqueue *queue) {
     queue->front = NULL;
     queue->rear = NULL;
     queue->len = 0;
-    return 0;
 }
 
 void taskqueue_push(taskqueue *queue, struct task *task) {
