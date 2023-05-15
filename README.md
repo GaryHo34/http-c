@@ -16,7 +16,7 @@ $ make
 
 ## Usage
 
-If no hostname and port are provided, the server will listen on localhost:3490.
+If no hostname and port are provided, the server will listen on localhost:3490 and the default thread number is 4.
 
 ```
 $ ./httpc [-hostname <hostname>] [-port <port>] [-thread <thread_number>]
