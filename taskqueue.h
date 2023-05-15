@@ -30,7 +30,7 @@ task *create_task(void (*func)(void *), void *arg);
  * @brief Initialize a task queue
  * @param queue The task queue to initialize
  */
-int taskqueue_init(taskqueue *queue);
+void taskqueue_init(taskqueue *queue);
 
 /**
  * @brief Push a task to the task queue
