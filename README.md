@@ -89,7 +89,7 @@ Open web browser and visit `http://localhost:3490/` can see the response.
 
 ## TEST
 
-I insert a usleep(50000) in the controller to simulate a long time request. Then
+I insert a `usleep(50000);` in the controller to simulate a long time request.
 
 you can use [`drill`](https://github.com/fcsonline/drill) to  test the server.
 
