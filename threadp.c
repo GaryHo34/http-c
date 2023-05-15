@@ -1,80 +1,143 @@
-#include <errno.h>
+#include "threadp.h"
+
 #include <pthread.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/syscall.h>
 #include <unistd.h>
 
 #include "log.h"
-#include "taskqueue.h"
 
-#define DEFAULT_THREAD_NUM 16
+void *thread_do(void *thread_p);
 
-pthread_mutex_t mutexQueue;
-pthread_cond_t condQueue;
-taskqueue *queue;
-struct arg_struct {
-    int arg1;
-    int arg2;
-};
+threadpool *threadpool_init(int num_of_threads) {
+    threadpool *thpool = (threadpool *)malloc(sizeof(threadpool));
+    if (thpool == NULL) {
+        ERROR_MSG("[threadpool] Failed to initiate a threadpool");
+        return NULL;
+    }
 
-void thread_do() {
-    while (1) {
-        pthread_mutex_lock(&mutexQueue);
-        while (queue->len == 0) {
-            pthread_cond_wait(&condQueue, &mutexQueue);
+    thpool->num_of_threads = 0;
+    thpool->num_of_working_threads = 0;
+    thpool->thread_alive = 1;
+
+    taskqueue_init(&thpool->queue);
+
+    thpool->threads = (thread **)malloc(sizeof(thread *) * num_of_threads);
+
+    if (thpool->threads == NULL) {
+        ERROR_MSG("[threadpool] Failed to allocate memory for threads");
+        taskqueue_destroy(&thpool->queue);
+        free(thpool);
+        return NULL;
+    }
+
+    pthread_mutex_init(&thpool->mutexQueue, NULL);
+    pthread_mutex_init(&thpool->mutexThreadCount, NULL);
+    pthread_mutex_init(&thpool->mutexThreadLife, NULL);
+    pthread_cond_init(&thpool->condQueue, NULL);
+    pthread_cond_init(&thpool->condThreadCount, NULL);
+
+    int i;
+    for (i = 0; i < num_of_threads; i++) {
+        thpool->threads[i] = (thread *)malloc(sizeof(thread));
+
+        if (thpool->threads[i] == NULL) {
+            ERROR_MSG("[threadpool] Failed to allocate memory for threads");
+            taskqueue_destroy(&thpool->queue);
+            free(thpool->threads);
+            free(thpool);
+            return NULL;
         }
-        task *mytask = taskqueue_pop(queue);
-        pthread_mutex_unlock(&mutexQueue);
-        uint64_t tid;
-        pthread_threadid_np(NULL, &tid);
-        struct arg_struct *myarg = mytask->arg;
-        myarg->arg2 = tid;
-        mytask->func(myarg);
-        free(myarg);
-        free(mytask);
+
+        thpool->threads[i]->thpool = thpool;
+        thpool->threads[i]->id = i;
+
+        pthread_create(&(thpool->threads[i]->pthread), NULL, thread_do, (thpool->threads[i]));
+        pthread_detach(thpool->threads[i]->pthread);
     }
+
+    // waiting until all threads are ready
+    while (thpool->num_of_threads != num_of_threads)
+        ;
+
+    return thpool;
 }
 
-void mytasktask(void *arg) {
-    sleep(1);
-    int id = ((struct arg_struct *)arg)->arg1;
-    int tid = ((struct arg_struct *)arg)->arg2;
-    printf("Task %d by thread: %d\n", id, tid);
+void *thread_do(void *arg) {
+    thread *thread_p = (thread *)arg;
+    char thread_name[16] = {0};
+    snprintf(thread_name, 16, "thpool-%d", thread_p->id);
+    pthread_setname_np(thread_name);
+
+    threadpool *thpool = thread_p->thpool;
+    taskqueue *queue = &thpool->queue;
+
+    pthread_mutex_lock(&thpool->mutexThreadCount);
+    thpool->num_of_threads += 1;
+    pthread_mutex_unlock(&thpool->mutexThreadCount);
+
+    while (thpool->thread_alive) {
+        pthread_mutex_lock(&thpool->mutexQueue);
+        while (queue->len == 0) {
+            pthread_cond_wait(&thpool->condQueue, &thpool->mutexQueue);
+        }
+        task *qtask = taskqueue_pop(queue);
+        pthread_mutex_unlock(&thpool->mutexQueue);
+
+        pthread_mutex_lock(&thpool->mutexThreadCount);
+        thpool->num_of_working_threads += 1;
+        pthread_mutex_unlock(&thpool->mutexThreadCount);
+
+        LOG_MSG("[threadpool] thread: %s working on task", thread_name);
+        qtask->func(qtask->arg);
+
+        free(qtask->arg);
+        free(qtask);
+
+        pthread_mutex_lock(&thpool->mutexThreadCount);
+        thpool->num_of_working_threads -= 1;
+        pthread_mutex_unlock(&thpool->mutexThreadCount);
+    }
+
+    pthread_mutex_lock(&thpool->mutexThreadCount);
+    thpool->num_of_threads -= 1;
+    pthread_mutex_unlock(&thpool->mutexThreadCount);
+
+    return NULL;
 }
 
-int main(int argc, char *argv[]) {
-    pthread_t threads[DEFAULT_THREAD_NUM];
-    queue = (taskqueue *)malloc(sizeof(taskqueue));
-    taskqueue_init(queue);
-    pthread_mutex_init(&mutexQueue, NULL);
-    pthread_cond_init(&condQueue, NULL);
-    int c = 0;
-    for (int i = 0; i < DEFAULT_THREAD_NUM; i++) {
-        pthread_create(&threads[i], NULL, (void *)thread_do, NULL);
-    }
-    // push 100 task to taskqueue
-    for (int i = 0; i < 100; i++) {
-        pthread_mutex_lock(&mutexQueue);
-        struct arg_struct *arg = (struct arg_struct *)malloc(sizeof(struct arg_struct));
-        arg->arg1 = i;
-        arg->arg2 = 0;
-        task *newTask = task_create(mytasktask, arg);
-        taskqueue_push(queue, newTask);
-        pthread_cond_signal(&condQueue);
-        pthread_mutex_unlock(&mutexQueue);
-    }
+void threadpool_add_task(threadpool *pool, void (*func)(void *), void *arg) {
+    task *qtask = create_task(func, arg);
 
-    // wait for all threads to finish
-    // use join, but we can use detach too
-    for (int i = 0; i < DEFAULT_THREAD_NUM; i++) {
-        pthread_join(threads[i], NULL);
+    pthread_mutex_lock(&pool->mutexQueue);
+    taskqueue_push(&pool->queue, qtask);
+    pthread_mutex_unlock(&pool->mutexQueue);
+    pthread_cond_signal(&pool->condQueue);
+}
+
+void threadoool_destroy(threadpool *thpool) {
+    thpool->thread_alive = 0;
+    pthread_mutex_lock(&thpool->mutexThreadLife);
+    thpool->thread_alive = 0;
+    pthread_mutex_unlock(&thpool->mutexThreadLife);
+
+    pthread_cond_broadcast(&thpool->condQueue);
+
+    while (thpool->num_of_working_threads != 0) {
+        usleep(10000);
     }
 
-    pthread_cond_destroy(&condQueue);
-    pthread_mutex_destroy(&mutexQueue);
-    taskqueue_destroy(queue);
+    taskqueue_destroy(&thpool->queue);
 
-    return 0;
+    pthread_mutex_destroy(&thpool->mutexQueue);
+    pthread_mutex_destroy(&thpool->mutexThreadCount);
+    pthread_mutex_destroy(&thpool->mutexThreadLife);
+    pthread_cond_destroy(&thpool->condQueue);
+    pthread_cond_destroy(&thpool->condThreadCount);
+
+    int i;
+    for (i = 0; i < thpool->num_of_threads; i++) {
+        free(thpool->threads[i]);
+    }
+
+    free(thpool->threads);
+    free(thpool);
 }
