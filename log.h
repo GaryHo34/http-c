@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define LOG_MSG(fmt, ...) fprintf(stdout, fmt "\n", ##__VA_ARGS__)
