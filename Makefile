@@ -6,8 +6,8 @@ CFLAGS = -Wall -Werror -g
 
 all: httpc
 
-httpc: main.o server.o request.o threadp.o 
-	$(CC) $(CFLAGS) -o httpc main.o server.o request.o threadp.o 
+httpc: main.o server.o request.o threadp.o taskqueue.o
+	$(CC) $(CFLAGS) -o httpc main.o server.o request.o threadp.o taskqueue.o
 
 main.o: main.c server.h log.h
 	$(CC) $(CFLAGS) -c main.c
