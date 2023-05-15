@@ -2,7 +2,7 @@
 CC = gcc
 
 # define compile-time flags all errors, warnings, and debugging symbols
-CFLAGS = -Wall -Werror -g 
+CFLAGS = -Wall -Werror -Wextra -g 
 
 all: httpc
 
