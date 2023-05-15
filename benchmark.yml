@@ -1,0 +1,10 @@
+---
+concurrency: 20
+base: "http://[::1]:3490"
+iterations: 1000
+rampup: 1
+timeout: 
+plan:
+  - name: Get response
+    request:
+      url: /
