@@ -38,7 +38,7 @@ typedef struct {
  * @brief generate request
  * @return request
  */
-request *generate_request();
+request *create_request();
 
 /**
  * @brief generate response
@@ -67,7 +67,7 @@ void generate_response(response *res, int code, char *msg, char *body);
  * @param res response string
  * @param response
  */
-void responseo_string(char *res_str, response *res);
+void response_string(char *res_str, response *res);
 
 /**
  * @brief free request

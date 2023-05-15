@@ -19,7 +19,7 @@ response* create_response() {
 }
 
 request* parse_request(char* buf) {
-    request* req = generate_request();
+    request* req = create_request();
 
     req->header->method = strtok_r(buf, DELEMITER, &buf);
     req->header->route = strtok_r(buf, DELEMITER, &buf);
@@ -36,7 +36,7 @@ void generate_response(response* res, int code, char* msg, char* body) {
     res->body = body;
 }
 
-void responseo_string(char* res_str, response* res) {
+void response_string(char* res_str, response* res) {
     sprintf(res_str, "%s %d %s\r\n\r\n%s",
             HTTP_PROTOCOL,
             res->header->code,
