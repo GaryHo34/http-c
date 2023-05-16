@@ -113,7 +113,7 @@ void threadpool_add_task(threadpool *pool, void (*func)(void *), void *arg) {
     pthread_cond_signal(&pool->condQueue);
 }
 
-void threadoool_destroy(threadpool *thpool) {
+void threadpool_destroy(threadpool *thpool) {
     thpool->thread_alive = 0;
     pthread_mutex_lock(&thpool->mutexThreadLife);
     thpool->thread_alive = 0;
