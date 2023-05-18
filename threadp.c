@@ -17,14 +17,14 @@ threadpool *threadpool_init(int num_of_threads) {
     thpool->num_of_threads = 0;
     thpool->num_of_working_threads = 0;
     thpool->thread_alive = 1;
-
-    taskqueue_init(&thpool->queue);
+    thpool->queue = (taskqueue *)malloc(sizeof(taskqueue));
+    taskqueue_init(thpool->queue);
 
     thpool->threads = (thread **)malloc(sizeof(thread *) * num_of_threads);
 
     if (thpool->threads == NULL) {
         ERROR_MSG("[threadpool] Failed to allocate memory for threads");
-        taskqueue_destroy(&thpool->queue);
+        taskqueue_destroy(thpool->queue);
         free(thpool);
         return NULL;
     }
@@ -41,8 +41,9 @@ threadpool *threadpool_init(int num_of_threads) {
 
         if (thpool->threads[i] == NULL) {
             ERROR_MSG("[threadpool] Failed to allocate memory for threads");
-            taskqueue_destroy(&thpool->queue);
+            taskqueue_destroy(thpool->queue);
             free(thpool->threads);
+            free(thpool->queue);
             free(thpool);
             return NULL;
         }
@@ -68,7 +69,7 @@ void *thread_do(void *arg) {
     pthread_setname_np(thread_name);
 
     threadpool *thpool = thread_p->thpool;
-    taskqueue *queue = &thpool->queue;
+    taskqueue *queue = thpool->queue;
 
     pthread_mutex_lock(&thpool->mutexThreadCount);
     thpool->num_of_threads += 1;
@@ -104,17 +105,16 @@ void *thread_do(void *arg) {
     return NULL;
 }
 
-void threadpool_add_task(threadpool *pool, void (*func)(void *), void *arg) {
+void threadpool_add_task(threadpool *thpool, void (*func)(void *), void *arg) {
     task *qtask = create_task(func, arg);
 
-    pthread_mutex_lock(&pool->mutexQueue);
-    taskqueue_push(&pool->queue, qtask);
-    pthread_mutex_unlock(&pool->mutexQueue);
-    pthread_cond_signal(&pool->condQueue);
+    pthread_mutex_lock(&thpool->mutexQueue);
+    taskqueue_push(thpool->queue, qtask);
+    pthread_mutex_unlock(&thpool->mutexQueue);
+    pthread_cond_signal(&thpool->condQueue);
 }
 
 void threadpool_destroy(threadpool *thpool) {
-    thpool->thread_alive = 0;
     pthread_mutex_lock(&thpool->mutexThreadLife);
     thpool->thread_alive = 0;
     pthread_mutex_unlock(&thpool->mutexThreadLife);
@@ -125,7 +125,7 @@ void threadpool_destroy(threadpool *thpool) {
         usleep(10000);
     }
 
-    taskqueue_destroy(&thpool->queue);
+    taskqueue_destroy(thpool->queue);
 
     pthread_mutex_destroy(&thpool->mutexQueue);
     pthread_mutex_destroy(&thpool->mutexThreadCount);
