@@ -22,7 +22,7 @@ typedef struct threadpool {
     volatile int thread_alive;
     volatile int num_of_threads;
     volatile int num_of_working_threads;
-    taskqueue queue;
+    taskqueue *queue;
 } threadpool;
 
 /**
