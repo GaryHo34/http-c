@@ -20,14 +20,6 @@
 void init_server(int *sockfd, char *host, char *port);
 
 /**
- * @brief cast sockaddr to sockaddr_in or sockaddr_in6
- * @param addrstr address string
- * @param sa sockaddr
- * @return IPv4 or IPv6 address
- */
-static inline void get_sockaddr(char *addrstr, struct sockaddr *sa);
-
-/**
  * @brief run server
  * @param sockfd socket file descriptor
  * @param controller controller function

@@ -1,6 +1,6 @@
 ---
 concurrency: 20
-base: "http://[::1]:3490"
+base: "http://localhost:3490"
 iterations: 1000
 rampup: 1
 timeout: 

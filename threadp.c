@@ -1,8 +1,8 @@
-#include "threadp.h"
-
+#define _GNU_SOURCE
 #include <pthread.h>
 #include <unistd.h>
 
+#include "threadp.h"
 #include "log.h"
 
 void *thread_do(void *thread_p);
@@ -66,7 +66,7 @@ void *thread_do(void *arg) {
     thread *thread_p = (thread *)arg;
     char thread_name[16] = {0};
     snprintf(thread_name, 16, "thpool-%d", thread_p->id);
-    pthread_setname_np(thread_name);
+    pthread_setname_np(thread_p->pthread, thread_name);
 
     threadpool *thpool = thread_p->thpool;
     taskqueue *queue = thpool->queue;
