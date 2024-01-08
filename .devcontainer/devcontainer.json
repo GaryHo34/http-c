@@ -3,10 +3,7 @@
 {
   "name": "ubuntu-rust",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "build": {
-    // Path is relative to the devcontainer.json file.
-    "dockerfile": "Dockerfile"
-  },
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
   "features": {
     "ghcr.io/devcontainers/features/rust:1": {}
@@ -20,7 +17,8 @@
 
   // Use 'postCreateCommand' to run commands after the container is created.
   // "postCreateCommand": "uname -a",
-  "postCreateCommand": "cargo install drill"
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install pkg-config gnupg2 -y",
+  "postStartCommand": "cargo install drill"
   // Configure tool-specific properties.
   // "customizations": {},
 
